@@ -77,6 +77,3 @@ if selector_proyecto:
             st.error(f"❌ No se pudo cargar la hoja '{proyecto}' en {chata_path}. Error: {e}")
 else:
     st.info("Seleccione al menos un proyecto para mostrar información.")
-
-
-
