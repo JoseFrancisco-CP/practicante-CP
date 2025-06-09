@@ -32,13 +32,33 @@ selector_proyecto = st.sidebar.multiselect("Seleccione proyectos:", df_proyecto[
 columnas_superiores = ["Manga", "Eslora", "Puntal", "Matricula"]
 columnas_extra = ["Temporada Gestion de Astillero", "Costo Total (PEN)", "Identificador"]
 
+# Mapeo de tipo de buque a archivo correspondiente
+archivo_proyecto_map = {
+    "REMOLCADOR": './REMOLCADOR.xlsx',
+    "CHATA": './CHATA.xlsx',
+    "EMBARCACION PESQUERA": './EMBARCACIÓN PESQUERA.xlsx',
+    "PANGA": './PANGA.xlsx'
+}
+
+# Determinar archivo correspondiente
+temporada_key = selector_temporada.upper().strip()
+archivo_seleccionado = None
+for tipo, ruta in archivo_proyecto_map.items():
+    if tipo in temporada_key:
+        archivo_seleccionado = ruta
+        break
+
+if not archivo_seleccionado:
+    st.warning("❗ No se reconoce el tipo de buque para esta temporada.")
+    st.stop()
+
+# Mostrar detalles del proyecto
 if selector_proyecto:
-    chata_path = './CHATA.xlsx'
     for proyecto in selector_proyecto:
         try:
-            df_historial = pd.read_excel(chata_path, sheet_name=proyecto)
+            df_historial = pd.read_excel(archivo_seleccionado, sheet_name=proyecto)
 
-            # Mostrar contenido en columnas: Modelo 3D y Detalles
+            # Mostrar en columnas: Modelo 3D y Detalles
             col1, col2 = st.columns([1.2, 1.8])
 
             with col1:
@@ -47,21 +67,19 @@ if selector_proyecto:
                 components.iframe(poly_url, height=400)
 
             with col2:
-                # Información técnica
                 columnas_1 = [col for col in columnas_superiores if col in df_historial.columns]
                 if columnas_1:
                     info_general = df_historial[columnas_1].iloc[0]
-                    st.subheader(f"📋 Información Técnica")
+                    st.subheader("📋 Información Técnica")
                     for col in columnas_1:
                         st.markdown(f"**{col}:** {info_general[col]}")
 
-                # Seguimiento adicional
                 columnas_2 = [col for col in columnas_extra if col in df_historial.columns]
                 if columnas_2:
                     info_extra = df_historial[columnas_2].iloc[0:3].copy()
                     if "Costo Total (PEN)" in info_extra.columns:
                         info_extra["Costo Total (PEN)"] = info_extra["Costo Total (PEN)"].apply(lambda x: f"S/. {x:,.2f}")
-                    st.subheader(f"🧾 Seguimiento del Proyecto")
+                    st.subheader("🧾 Seguimiento del Proyecto")
                     st.dataframe(info_extra)
 
             # Historial técnico
@@ -74,6 +92,6 @@ if selector_proyecto:
                 st.info("No hay datos adicionales para mostrar en historial.")
 
         except Exception as e:
-            st.error(f"❌ No se pudo cargar la hoja '{proyecto}' en {chata_path}. Error: {e}")
+            st.error(f"❌ No se pudo cargar la hoja '{proyecto}' en {archivo_seleccionado}. Error: {e}")
 else:
     st.info("Seleccione al menos un proyecto para mostrar información.")
